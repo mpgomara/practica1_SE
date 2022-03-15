@@ -16,7 +16,7 @@ OBJCOPY=$(PREFIX)objcopy
 SIZE=$(PREFIX)size
 RM=rm -f
 
-#TARGET=hello_world
+TARGETH=hello_world
 TARGET=led_blinky
 
 foo=board/pin_mux_h.c hello_world.c board/pin_mux_h.o hello_world.o
@@ -30,23 +30,24 @@ OBJH=$(patsubst %.c, %.o, $(filter-out $(fooh),$(SRC)))
 
 
 all: build size
+allh: buildh sizeh
 build: elf srec bin
+buildh: elfh srech binh
 elf: $(TARGET).elf
+elfh: $(TARGETH).elf
 srec: $(TARGET).srec
+srech: $(TARGETH).srec
 bin: $(TARGET).bin
+binh: $(TARGETH).bin
 
 clean:
-	$(RM) $(TARGET).srec $(TARGET).elf $(TARGET).bin $(TARGET).map $(OBJ)
+	$(RM) *.srec *.elf *.bin *.map $(OBJH) $(OBJ)
+
+$(TARGETH).elf: $(OBJH)
+	$(LD) $(LDFLAGS) $(OBJH) $(LDLIBS) -o $@
 
 $(TARGET).elf: $(OBJ)
-	echo "\n echo debug " $(TARGET)
-ifeq ($(TARGET), led_blinky)
-	echo "\nled\n"
 	$(LD) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
-else
-	echo "\nhello\n"
-	$(LD) $(LDFLAGS) $(OBJH) $(LDLIBS) -o $@
-endif
 
 %.srec: %.elf
 	$(OBJCOPY) -O srec $< $@
@@ -57,9 +58,12 @@ endif
 size:
 	$(SIZE) $(TARGET).elf
 
+sizeh:
+	$(SIZE) $(TARGETH).elf
+
 flash_led: all
 	openocd -f openocd.cfg -c "program $(TARGET).elf verify reset exit"
 
-flash_hello: all
-	openocd -f openocd.cfg -c "program $(TARGET).elf verify reset exit"
+flash_hello: allh
+	openocd -f openocd.cfg -c "program $(TARGETH).elf verify reset exit"
 
